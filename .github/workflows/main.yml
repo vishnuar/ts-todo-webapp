@@ -1,0 +1,37 @@
+name: TypeScript To-Do CI Pipeline
+
+# Trigger the workflow on any push or pull request targeting the main branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-and-build:
+    name: Install & Verify Compilation
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Fetch the source code from your repository onto the runner runner environment
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Provision a clean Node.js runtime environment on the machine
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm' # Caches your npm packages to optimize subsequent build run speeds
+
+      # Step 3: Install all required project packages cleanly
+      - name: Install Application Dependencies
+        run: npm ci
+
+      # Step 4: Run the isolated manual frontend script compilation check
+      - name: Verify Isolated Frontend Client Compilation
+        run: ./node_modules/.bin/tsc src/public/client.ts --target es2022 --module esnext --skipLibCheck --ignoreConfig
+
+      # Step 5: Execute the full project master build (via tsconfig.json configuration rules)
+      - name: Execute Full Core Project Production Build
+        run: npm run build
